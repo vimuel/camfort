@@ -24,6 +24,7 @@
 
 module Camfort.Specification.Stencils.InferenceFrontend where
 
+import Control.Monad (when)
 import Control.Monad.State.Strict
 import Control.Monad.Reader
 import Control.Monad.Writer.Strict hiding (Product)
@@ -162,19 +163,16 @@ genSpecsAndReport mode span lhs blocks = do
     let ((specs, visited), evalInfos) = runWriter $ genSpecifications ivmap lhs blocks
     modify (\state -> state { visitedNodes = (visitedNodes state) ++ visited })
     tell [ (span, Left specs) ]
-    if mode == EvalMode
-      then do
-         tell [ (span, Right ("EVALMODE: assign to relative array subscript\
-                              \ (tag: tickAssign)","")) ]
-         mapM_ (\evalInfo -> tell [ (span, Right evalInfo) ]) evalInfos
-         mapM_ (\spec -> if show spec == ""
-                          then tell [ (span, Right ("EVALMODE: Cannot make spec\
-                                                   \ (tag: emptySpec)","")) ]
-                          else return ()) specs
-         return specs
-      else return specs
-
-
+    when (mode == EvalMode) $ do
+        when (lhs == [])
+             (tell [ (span, Right ("EVALMODE: (tag: tickLHSvar)", "")) ])
+        tell [ (span, Right ("EVALMODE: assign to relative array subscript\
+                             \ (tag: tickAssign)","")) ]
+        mapM_ (\evalInfo -> tell [ (span, Right evalInfo) ]) evalInfos
+        mapM_ (\spec -> when (show spec == "")
+                         $ tell [ (span, Right ("EVALMODE: Cannot make spec\
+                                              \ (tag: emptySpec)","")) ]) specs
+    return specs
 
 -- Match expressions which are array subscripts, returning Just of their
 -- index expressions, else Nothing
