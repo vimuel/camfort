@@ -4,6 +4,8 @@ program reduction
   integer :: i, j
   real, dimension(10) :: a, b
 
+  x = 0
+  
   do i = 1, 10
      eps_E = toMask(iand(b(i+1), .true.))
      if (.true.) then

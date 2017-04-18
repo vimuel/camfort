@@ -164,9 +164,10 @@ genSpecsAndReport mode span lhs blocks = do
     modify (\state -> state { visitedNodes = (visitedNodes state) ++ visited })
     tell [ (span, Left specs) ]
     when (mode == EvalMode) $ do
-        when (lhs == [])
-             (tell [ (span, Right ("EVALMODE: (tag: tickLHSvar)", "")) ])
-        tell [ (span, Right ("EVALMODE: assign to relative array subscript\
+        when (lhs == [] && not (null specs) && not (all (== "") (map show specs)))
+             $ tell [ (span, Right ("EVALMODE: (tag: tickLHSvar)", "")) ]
+        when (lhs /= [])
+             $ tell [ (span, Right ("EVALMODE: assign to relative array subscript\
                              \ (tag: tickAssign)","")) ]
         mapM_ (\evalInfo -> tell [ (span, Right evalInfo) ]) evalInfos
         mapM_ (\spec -> when (show spec == "")
